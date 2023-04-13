@@ -5,8 +5,12 @@ import requests
 # 실시간 인기 종목 알아보기
 # 종목의 시세 변동 알아보기
 
+# 바이낸스 API 문서
+# https://binance-docs.github.io/apidocs/#change-log
+
 # 네이버 주식 API
 # https://finance.naver.com/item/main.nhn?code=005930 
+
 def main(request):
     return render(request,'bot/main.html')
 
