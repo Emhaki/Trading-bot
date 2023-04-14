@@ -6,6 +6,9 @@ load_dotenv()
 
 # binance 패키지
 from binance.client import Client
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 # 바이낸스 API 문서
 # https://binance-docs.github.io/apidocs/#change-log
@@ -81,4 +84,83 @@ class CoinBot:
             print(result)
 
 bot = CoinBot()
-print(bot.client.get_open_orders())
+client = bot.client
+# print(bot.client.get_open_orders())
+
+def buy_coin_at_price(client, symbol, target_price):
+    # symbol = BNBUSDT
+    ticker_info = client.get_ticker(symbol=symbol)
+    last_price = ticker_info['lastPrice']
+    last_price = round(float(last_price), 2)
+    if last_price <= target_price:
+        return client.order_market_buy(
+            symbol=symbol,
+            quantity=1.0,
+            price=str(target_price)
+        )
+    return None
+
+# 1. 이동평균선 보다 낮으면 사기
+# 2. 이동평균선 보다 가격이 높으면 팔기
+def get_price_history(klines):
+    klines = client.get_historical_klines('BNBUSDT', '1h', '2 week ago UTC')
+    for line in klines:
+        del line[5:]
+    
+    df = pd.DataFrame(klines, columns=['data', 'open', 'high', 'low', 'close'])
+    df.set_index('data', inplace=True)
+    df.index = pd.to_datetime(df.index, unit='ms')
+
+    return df.astype(float)
+# print(get_price_history(client))
+#                        open    high     low  close
+# data
+# 2023-04-05 05:00:00  314.90  315.60  314.90  315.6
+# 2023-04-05 06:00:00  315.60  315.80  315.00  315.5
+# 2023-04-05 07:00:00  315.20  315.22  113.30  314.6
+# 2023-04-05 08:00:00  314.70  314.90  313.86  314.9
+# 2023-04-05 09:00:00  314.82  315.00  313.90  314.9
+# ...                     ...     ...     ...    ...
+# 2023-04-14 09:00:00  333.00  333.01  332.30  332.6
+# 2023-04-14 10:00:00  332.60  333.60  244.84  332.2
+# 2023-04-14 11:00:00  332.28  335.80  332.20  333.2
+# 2023-04-14 12:00:00  333.30  334.80  250.20  331.6
+# 2023-04-14 13:00:00  331.70  332.50  331.30  332.5
+
+def trade_based_on_5_sms(client):
+    df = get_price_history(client)
+
+    # 5일 이동 평균선
+    df['5_sma'] = df['close'].rolling(5).mean()
+    df['buy'] = np.where(df['5_sma'] > df['close'], 1, 0) # 참이면 1, 거짓이면 0
+    df['sell'] = np.where(df['5_sma'] <= df['close'], 1, 0) # 참이면 1, 거짓이면 0
+    return df
+print(trade_based_on_5_sms(client))
+#                        open    high     low  close   5_sma  buy  sell
+# data
+# 2023-04-05 05:00:00  314.90  315.60  314.90  315.6     NaN    0     0 
+# 2023-04-05 06:00:00  315.60  315.80  315.00  315.5     NaN    0     0 
+# 2023-04-05 07:00:00  315.20  315.22  113.30  314.6     NaN    0     0 
+# 2023-04-05 08:00:00  314.70  314.90  313.86  314.9     NaN    0     0 
+# 2023-04-05 09:00:00  314.82  315.00  313.90  314.9  315.10    1     0 
+# ...                     ...     ...     ...    ...     ...  ...   ... 
+# 2023-04-14 09:00:00  333.00  333.01  332.30  332.6  333.44    1     0 
+# 2023-04-14 10:00:00  332.60  333.60  244.84  332.2  333.14    1     0 
+# 2023-04-14 11:00:00  332.28  335.80  332.20  333.2  332.98    0     1 
+# 2023-04-14 12:00:00  333.30  334.80  250.20  331.6  332.50    1     0 
+# 2023-04-14 13:00:00  331.70  332.80  331.30  332.6  332.44    0     1 
+
+def trade_based_on_15_sms(client):
+    df = get_price_history(client)
+
+    # 이동 평균선
+    df['5_sma'] = df['close'].rolling(5).mean()
+    df['15_sma'] = df['close'].rolling(15).mean()
+    
+    return df
+
+df = trade_based_on_15_sms(client)
+df[['close', '5_sma', '15_sma']].plot()
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.show()
