@@ -13,6 +13,7 @@ multidict==6.0.4
 pycryptodome==3.17
 python-binance==1.0.17
 python-dateutil==2.8.2
+python-dotenv==1.0.0
 pytz==2023.3
 pytz-deprecation-shim==0.1.0.post0
 regex==2023.3.23

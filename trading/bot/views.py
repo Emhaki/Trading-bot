@@ -1,12 +1,15 @@
 from django.shortcuts import render
 import requests
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# 사용자 관심 종목 추가
-# 실시간 인기 종목 알아보기
-# 종목의 시세 변동 알아보기
+# binance 패키지
+from binance.client import Client
 
 # 바이낸스 API 문서
 # https://binance-docs.github.io/apidocs/#change-log
+# https://python-binance.readthedocs.io/en/latest/
 
 # 네이버 주식 API
 # https://finance.naver.com/item/main.nhn?code=005930 
@@ -20,3 +23,7 @@ def get_stock_summery(itemcode):
     print(stock_info)
     return stock_info
 
+API_KEY = os.getenv("API_KEY")
+API_SECRET = os.getenv("SECRET_KEY")
+client = Client(API_KEY, API_SECRET, testnet=True)
+print(client.get_account())
