@@ -60,6 +60,30 @@ class CoinBot:
             quantity = quantity
         )
         return order
+    
+    def sell_coin_at_primium(self, symbol, quantity):
+        # 1. 코인의 현재 가격불러오기
+        ticker_into = self.client.get_ticker(symbol=symbol)
+        last_price = ticker_into['lastPrice'] # 30805.72000000
         
+        # 2 코인에 지금 가격에서 10% 프리미엄 한 가격 계산
+        primium_price = round((float(last_price) * 1.1), 2)
+
+        # 3 그 가격에 주문 넣기
+        order = self.client.order_limit_sell(
+            symbol = symbol,
+            quantity = quantity,
+            price = str(primium_price)
+        )
+        return order
+    
+    def cancel_all_open_orders(self):
+        open_orders = self.client.get_open_orders()
+        for order in open_orders:
+            order_id = order['orderId']
+            symbol = order['symbol']
+            result = self.client.cancel_order(symbol=symbol, orderId=order_id)
+            print(result)
+
 bot = CoinBot()
-bot.buy_coin_at_discount()
+print(bot.client.get_open_orders())
