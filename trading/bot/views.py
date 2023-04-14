@@ -7,7 +7,6 @@ load_dotenv()
 # binance 패키지
 from binance.client import Client
 
-
 # 바이낸스 API 문서
 # https://binance-docs.github.io/apidocs/#change-log
 # https://python-binance.readthedocs.io/en/latest/
@@ -35,31 +34,27 @@ class CoinBot:
     # 지정가에 코인 구매
     def buy_coin_at_discount(self, symbol, quantity):
         # 1. 코인의 지금 가격을 불러오기
-        # 2. 코인의 지금 가격에서 10% 디스카운트 된 가격을 계산하기
-        # 3. 그 가격에 주문 넣기
-
-        # 1
         ticker_into = self.client.get_ticker(symbol=symbol)
         last_price = ticker_into['lastPrice'] # 30805.72000000
         
-        # 2
+        # 2. 코인의 지금 가격에서 10% 디스카운트 된 가격을 계산하기
         discounted_price = round((float(last_price) * 0.9), 2)
 
-        # 3
-        order = self.client.order_limit_buy(
+        # 3. 그 가격에 주문 넣기
+        return self.client.order_limit_buy(
             symbol = symbol,
             quantity = quantity,
             price = str(discounted_price)
         )
-        return order
+        
 
     # 현재가에 코인구매
     def buy_coin_at_market_price(self, symbol, quantity):
-        order = self.client.order_market_buy(
+        return self.client.order_market_buy(
             symbol = symbol,
             quantity = quantity
         )
-        return order
+        
     
     def sell_coin_at_primium(self, symbol, quantity):
         # 1. 코인의 현재 가격불러오기
@@ -70,12 +65,12 @@ class CoinBot:
         primium_price = round((float(last_price) * 1.1), 2)
 
         # 3 그 가격에 주문 넣기
-        order = self.client.order_limit_sell(
+        return self.client.order_limit_sell(
             symbol = symbol,
             quantity = quantity,
             price = str(primium_price)
         )
-        return order
+        
     
     def cancel_all_open_orders(self):
         open_orders = self.client.get_open_orders()
