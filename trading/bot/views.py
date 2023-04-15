@@ -157,7 +157,7 @@ def trade_based_on_15_sms(client):
     df['5_sma'] = df['close'].rolling(5).mean()
     df['15_sma'] = df['close'].rolling(15).mean()
     
-    return df
+    return df  
 
 df = trade_based_on_15_sms(client)
 df[['close', '5_sma', '15_sma']].plot()
